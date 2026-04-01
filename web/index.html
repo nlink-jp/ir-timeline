@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ir-timeline</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --timeline-line: #cbd5e1;
+  --timeline-dot: #3b82f6;
+  --delta-bg: #f1f5f9;
+  --delta-text: #64748b;
+  --modal-overlay: rgba(0,0,0,0.4);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans CJK JP", sans-serif;
+}
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border: #334155;
+  --primary: #60a5fa;
+  --primary-hover: #3b82f6;
+  --danger: #f87171;
+  --danger-hover: #ef4444;
+  --timeline-line: #475569;
+  --timeline-dot: #60a5fa;
+  --delta-bg: #1e293b;
+  --delta-text: #94a3b8;
+  --modal-overlay: rgba(0,0,0,0.6);
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.4);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+/* Header */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--bg);
+}
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+.header-case-id {
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.header-case-id:empty { display: none; }
+.header-tz {
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.header-tz:empty { display: none; }
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 200px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.header-title:hover { background: var(--surface-hover); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-hover); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-sm { padding: 4px 10px; font-size: 13px; }
+.btn-icon { padding: 6px 8px; font-size: 16px; border: none; background: transparent; }
+.btn-icon:hover { background: var(--surface-hover); border-radius: 4px; }
+/* Toolbar */
+.toolbar {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  background: var(--bg);
+}
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.view-toggle button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+}
+.view-toggle button.active {
+  background: var(--primary);
+  color: #fff;
+}
+.tag-filter-wrap {
+  position: relative;
+  display: inline-block;
+}
+.tag-filter-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.tag-filter-btn:hover { background: var(--surface-hover); }
+.tag-filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 200;
+  display: none;
+  padding: 4px 0;
+}
+.tag-filter-dropdown.open { display: block; }
+.tag-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.tag-filter-item:hover { background: var(--surface-hover); }
+.tag-filter-item input { margin: 0; cursor: pointer; }
+.tag-filter-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+/* Main content */
+.main { padding: 24px; margin: 0 auto; }
+.main:has(#listView:not([style*="none"])) { max-width: 1200px; }
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+.empty-state h2 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
+/* LIST VIEW */
+.timeline-list { position: relative; padding-left: 40px; }
+.timeline-list::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--timeline-line);
+}
+.tl-item { position: relative; margin-bottom: 8px; }
+.tl-dot {
+  position: absolute;
+  left: -29px;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  z-index: 1;
+}
+.tl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s;
+  cursor: pointer;
+}
+.tl-card:hover { box-shadow: var(--shadow-lg); }
+.tl-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.tl-time {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.tl-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag-pill {
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.tl-actor {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+.tl-desc {
+  font-size: 14px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.tl-images {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.tl-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.tl-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tl-card:hover .tl-actions { opacity: 1; }
+.tl-delta {
+  text-align: center;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--delta-text);
+  position: relative;
+  left: -10px;
+}
+/* CHART VIEW */
+.chart-container {
+  overflow-x: auto;
+  position: relative;
+  padding-bottom: 20px;
+}
+.chart-svg { display: block; }
+.chart-lane-label {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text);
+}
+.chart-axis-label {
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+.chart-lane-bg { opacity: 0.03; }
+.chart-grid-line { stroke: var(--border); stroke-width: 1; }
+.chart-marker {
+  cursor: pointer;
+  transition: r 0.15s;
+}
+.chart-marker:hover { r: 8; }
+.chart-bar:hover { opacity: 0.9 !important; }
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  margin-bottom: 4px;
+}
+.chart-zoom-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 40px;
+  text-align: center;
+}
+.chart-container { cursor: grab; position: relative; }
+.chart-cursor-line {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  background: var(--primary);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+}
+.chart-cursor-label {
+  position: absolute;
+  top: 4px;
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 51;
+  display: none;
+  transform: translateX(-50%);
+}
+.chart-tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  max-width: 300px;
+  pointer-events: none;
+  z-index: 100;
+  display: none;
+}
+.chart-tooltip.visible { display: block; }
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal h2 { font-size: 18px; margin-bottom: 16px; }
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+/* Image lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  cursor: pointer;
+}
+.lightbox.hidden { display: none; }
+.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+/* Meta edit */
+.meta-edit-overlay { z-index: 1001; }
+/* Image upload area inside modal */
+.image-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.image-upload-area:hover,
+.image-upload-area.dragover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.image-upload-area input { display: none; }
+.upload-preview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.upload-preview-item {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.upload-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.upload-preview-item .remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Existing images in edit modal */
+.existing-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.existing-image-item {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.existing-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.input-row { display: flex; gap: 8px; align-items: center; }
+.tz-select {
+  padding: 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  min-width: 120px;
+}
+.tz-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.existing-image-item .remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+</head>
+<body>
+<div class="sticky-top">
+<div class="header">
+  <span class="header-brand">ir-timeline</span>
+  <span class="header-case-id" id="caseId" title="Click to edit"></span>
+  <span class="header-title" id="incidentTitle" title="Click to edit">Incident Timeline</span>
+  <span class="header-tz" id="headerTz" title="Click to edit timezone"></span>
+  <div class="header-actions">
+    <button class="btn btn-sm" id="langToggle">ja</button>
+    <button class="btn-icon" id="themeToggle" title="Toggle theme">&#9788;</button>
+  </div>
+</div>
+<div class="toolbar">
+  <button class="btn btn-primary" id="addEventBtn" data-i18n="addEvent">+ Add Event</button>
+  <div class="tag-filter-wrap" id="tagFilterWrap">
+    <button class="tag-filter-btn" id="tagFilterBtn" type="button" data-i18n="allTags">All tags</button>
+    <div class="tag-filter-dropdown" id="tagFilterDropdown"></div>
+  </div>
+  <div class="view-toggle">
+    <button id="viewList" class="active" data-i18n="list">List</button>
+    <button id="viewChart" data-i18n="chart">Chart</button>
+  </div>
+  <div style="flex:1"></div>
+  <button class="btn btn-sm" id="exportBtn" data-i18n="exportMd">Export .md</button>
+</div>
+</div><!-- /.sticky-top -->
+
+<div class="main">
+  <div id="listView"></div>
+  <div id="chartView" style="display:none"></div>
+</div>
+
+<!-- Event Modal -->
+<div class="modal-overlay hidden" id="eventModal">
+  <div class="modal">
+    <h2 id="modalTitle" data-i18n="addEventTitle">Add Event</h2>
+    <form id="eventForm">
+      <input type="hidden" id="eventId">
+      <div class="form-group">
+        <label for="eventTimestamp" data-i18n="timestamp">Timestamp *</label>
+        <div class="input-row">
+          <input type="datetime-local" id="eventTimestamp" required step="1" style="flex:1">
+          <select id="eventInputTz" class="tz-select"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="eventTimestampEnd" data-i18n="timestampEnd">End time (optional)</label>
+        <div class="input-row">
+          <input type="datetime-local" id="eventTimestampEnd" step="1" style="flex:1">
+          <span class="tz-hint" id="eventEndTzHint"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="eventDescription" data-i18n="description">Description</label>
+        <textarea id="eventDescription" data-i18n-placeholder="descriptionPlaceholder" placeholder="What happened?"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="eventActor" data-i18n="actor">Actor</label>
+        <input type="text" id="eventActor" data-i18n-placeholder="actorPlaceholder" placeholder="Who did it?" list="actorList">
+        <datalist id="actorList"></datalist>
+      </div>
+      <div class="form-group">
+        <label for="eventTags" data-i18n="tagsLabel">Tags (comma-separated)</label>
+        <input type="text" id="eventTags" placeholder="detection, analysis" list="tagList">
+        <datalist id="tagList"></datalist>
+      </div>
+      <div class="form-group">
+        <label data-i18n="images">Images</label>
+        <div class="existing-images" id="existingImages"></div>
+        <div class="image-upload-area" id="imageUploadArea">
+          <input type="file" id="imageInput" accept="image/*" multiple>
+          <span data-i18n="dropImages">Drop images here or click to select</span>
+        </div>
+        <div class="upload-preview" id="uploadPreview"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="cancelEventBtn" data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="deleteEventBtn" style="display:none" data-i18n="delete">Delete</button>
+        <button type="submit" class="btn btn-primary" id="saveEventBtn" data-i18n="save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Meta Edit Modal -->
+<div class="modal-overlay hidden meta-edit-overlay" id="metaModal">
+  <div class="modal">
+    <h2 data-i18n="editIncidentInfo">Edit Incident Info</h2>
+    <div class="form-group">
+      <label for="metaCaseId" data-i18n="caseIdLabel">Case ID</label>
+      <input type="text" id="metaCaseId" placeholder="INC-2026-0042">
+    </div>
+    <div class="form-group">
+      <label for="metaTitle" data-i18n="titleLabel">Title</label>
+      <input type="text" id="metaTitle" data-i18n-placeholder="titlePlaceholder" placeholder="Incident title">
+    </div>
+    <div class="form-group">
+      <label for="metaTimezone" data-i18n="timezoneLabel">Timezone</label>
+      <input type="text" id="metaTimezone" placeholder="Asia/Tokyo" list="tzList">
+      <datalist id="tzList">
+        <option value="UTC">
+        <option value="Asia/Tokyo">
+        <option value="Asia/Shanghai">
+        <option value="Asia/Seoul">
+        <option value="Asia/Singapore">
+        <option value="Asia/Kolkata">
+        <option value="Europe/London">
+        <option value="Europe/Berlin">
+        <option value="Europe/Paris">
+        <option value="America/New_York">
+        <option value="America/Chicago">
+        <option value="America/Denver">
+        <option value="America/Los_Angeles">
+        <option value="Pacific/Auckland">
+        <option value="Australia/Sydney">
+      </datalist>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelMetaBtn" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary" id="saveMetaBtn" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox hidden" id="lightbox">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<!-- Chart Tooltip -->
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<script>
+// --- i18n ---
+const I18N = {
+  en: {
+    addEvent: '+ Add Event',
+    allTags: 'All tags',
+    list: 'List',
+    chart: 'Chart',
+    exportMd: 'Export .md',
+    addEventTitle: 'Add Event',
+    editEventTitle: 'Edit Event',
+    timestamp: 'Timestamp *',
+    timestampEnd: 'End time (optional)',
+    inputTzLabel: 'Input TZ',
+    sameAsTz: '(same TZ)',
+    description: 'Description',
+    descriptionPlaceholder: 'What happened?',
+    actor: 'Actor',
+    actorPlaceholder: 'Who did it?',
+    tagsLabel: 'Tags (comma-separated)',
+    images: 'Images',
+    dropImages: 'Drop images here or click to select',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    save: 'Save',
+    editIncidentInfo: 'Edit Incident Info',
+    caseIdLabel: 'Case ID',
+    titleLabel: 'Title',
+    titlePlaceholder: 'Incident title',
+    timezoneLabel: 'Timezone',
+    noEvents: 'No events yet',
+    noEventsHint: 'Click "+ Add Event" to record your first timeline entry.',
+    noChartEvents: 'No events to chart',
+    chartFit: 'Fit',
+    chartReset: 'Reset',
+    confirmDelete: 'Delete this event?',
+    confirmDeleteAll: 'Delete this event and all its images?',
+    confirmDeleteImage: 'Delete image {name}?',
+    defaultTitle: 'Incident Timeline',
+    edit: 'Edit',
+    untagged: '(untagged)',
+  },
+  ja: {
+    addEvent: '+ イベント追加',
+    allTags: 'すべてのタグ',
+    list: 'リスト',
+    chart: 'チャート',
+    exportMd: 'Markdown出力',
+    addEventTitle: 'イベント追加',
+    editEventTitle: 'イベント編集',
+    timestamp: '発生日時 *',
+    timestampEnd: '終了日時（任意）',
+    inputTzLabel: '入力TZ',
+    sameAsTz: '(同じTZ)',
+    description: '内容',
+    descriptionPlaceholder: '何が起きた？',
+    actor: '対応者',
+    actorPlaceholder: '誰が対応した？',
+    tagsLabel: 'タグ（カンマ区切り）',
+    images: '画像',
+    dropImages: 'ここに画像をドロップ、またはクリックして選択',
+    cancel: 'キャンセル',
+    delete: '削除',
+    save: '保存',
+    editIncidentInfo: 'インシデント情報の編集',
+    caseIdLabel: 'ケース ID',
+    titleLabel: 'タイトル',
+    titlePlaceholder: 'インシデントのタイトル',
+    timezoneLabel: 'タイムゾーン',
+    noEvents: 'イベントがありません',
+    noEventsHint: '「+ イベント追加」をクリックして最初のイベントを記録しましょう。',
+    noChartEvents: '表示するイベントがありません',
+    chartFit: '全体',
+    chartReset: 'リセット',
+    confirmDelete: 'このイベントを削除しますか？',
+    confirmDeleteAll: 'このイベントと添付画像をすべて削除しますか？',
+    confirmDeleteImage: '画像「{name}」を削除しますか？',
+    defaultTitle: 'インシデントタイムライン',
+    edit: '編集',
+    untagged: '(タグなし)',
+  }
+};
+
+let currentLang = localStorage.getItem('ir-tl-lang') || 'en';
+
+function t(key, params) {
+  let s = (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      s = s.replace(`{${k}}`, v);
+    }
+  }
+  return s;
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  document.getElementById('langToggle').textContent = currentLang === 'en' ? 'ja' : 'en';
+  document.documentElement.lang = currentLang;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ja' : 'en';
+  localStorage.setItem('ir-tl-lang', currentLang);
+  applyLang();
+  render();
+}
+
+// --- State ---
+let events = [];
+let meta = {};
+let allTags = [];
+let currentTimezone = '';
+let currentView = localStorage.getItem('ir-tl-view') || 'list';
+let pendingFiles = [];
+let selectedTags = new Set(); // empty = show all
+
+// Chart zoom/pan state
+let chartZoom = 1;       // 1 = fit all, >1 = zoomed in
+let chartPanX = 0;       // pan offset in ms (shift of visible window start)
+let chartBaseMinT = 0;   // original time range min
+let chartBaseMaxT = 0;   // original time range max
+
+// --- Tag Colors ---
+const TAG_COLORS = {
+  detection: '#3b82f6', analysis: '#8b5cf6', containment: '#f59e0b',
+  eradication: '#ef4444', recovery: '#10b981', communication: '#14b8a6',
+  lesson: '#6366f1'
+};
+
+function tagColor(tag) {
+  if (TAG_COLORS[tag]) return TAG_COLORS[tag];
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) h = tag.charCodeAt(i) + ((h << 5) - h);
+  return `hsl(${Math.abs(h) % 360}, 55%, 50%)`;
+}
+
+// --- API ---
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || res.statusText);
+  }
+  return res;
+}
+
+async function loadMeta() {
+  meta = await (await api('/api/meta')).json();
+  document.getElementById('caseId').textContent = meta.case_id || '';
+  document.getElementById('incidentTitle').textContent = meta.title || t('defaultTitle');
+  document.title = (meta.case_id ? `[${meta.case_id}] ` : '') + (meta.title || 'ir-timeline');
+  // Load timezone
+  const tzResp = await (await api('/api/timezone')).json();
+  currentTimezone = tzResp.timezone || '';
+  document.getElementById('headerTz').textContent = currentTimezone ? ('TZ: ' + currentTimezone) : '';
+}
+
+async function loadEvents() {
+  events = await (await api('/api/events')).json();
+  render();
+}
+
+async function loadTags() {
+  allTags = await (await api('/api/tags')).json();
+  updateTagFilter();
+  updateTagDatalist();
+}
+
+async function refresh() {
+  await Promise.all([loadMeta(), loadEvents(), loadTags()]);
+}
+
+// --- Render ---
+function render() {
+  const filtered = selectedTags.size > 0
+    ? events.filter(e => e.tags.some(t => selectedTags.has(t)))
+    : events;
+
+  if (currentView === 'list') {
+    renderList(filtered);
+    document.getElementById('listView').style.display = '';
+    document.getElementById('chartView').style.display = 'none';
+  } else {
+    renderChart(filtered);
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('chartView').style.display = '';
+  }
+}
+
+// --- List View ---
+function renderList(items) {
+  const el = document.getElementById('listView');
+  if (items.length === 0) {
+    el.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'empty-state';
+    const h = document.createElement('h2');
+    h.textContent = t('noEvents');
+    const p = document.createElement('p');
+    p.textContent = t('noEventsHint');
+    d.appendChild(h);
+    d.appendChild(p);
+    el.appendChild(d);
+    return;
+  }
+
+  el.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'timeline-list';
+
+  items.forEach((ev, i) => {
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'tl-dot';
+    dot.style.background = ev.tags.length > 0 ? tagColor(ev.tags[0]) : 'var(--timeline-dot)';
+    item.appendChild(dot);
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'tl-card';
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.tl-actions') || e.target.closest('.tl-thumb')) return;
+      openEditEvent(ev);
+    });
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'tl-card-header';
+
+    const time = document.createElement('span');
+    time.className = 'tl-time';
+    let timeText = formatTime(ev.timestamp);
+    if (ev.timestamp_end) {
+      timeText += ' — ' + formatTime(ev.timestamp_end);
+      const dur = calcDelta(ev.timestamp, ev.timestamp_end);
+      if (dur) timeText += ` (${dur})`;
+    }
+    time.textContent = timeText;
+    header.appendChild(time);
+
+    if (ev.tags.length > 0) {
+      const tags = document.createElement('span');
+      tags.className = 'tl-tags';
+      ev.tags.forEach(t => {
+        const pill = document.createElement('span');
+        pill.className = 'tag-pill';
+        pill.style.background = tagColor(t);
+        pill.textContent = t;
+        tags.appendChild(pill);
+      });
+      header.appendChild(tags);
+    }
+
+    if (ev.actor) {
+      const actor = document.createElement('span');
+      actor.className = 'tl-actor';
+      actor.textContent = ev.actor;
+      header.appendChild(actor);
+    }
+    card.appendChild(header);
+
+    // Description
+    if (ev.description) {
+      const desc = document.createElement('div');
+      desc.className = 'tl-desc';
+      desc.textContent = ev.description;
+      card.appendChild(desc);
+    }
+
+    // Images
+    if (ev.images && ev.images.length > 0) {
+      const imgs = document.createElement('div');
+      imgs.className = 'tl-images';
+      ev.images.forEach(img => {
+        const thumb = document.createElement('img');
+        thumb.className = 'tl-thumb';
+        thumb.src = `/api/images/${img.id}`;
+        thumb.alt = img.filename;
+        thumb.addEventListener('click', () => openLightbox(`/api/images/${img.id}`));
+        imgs.appendChild(thumb);
+      });
+      card.appendChild(imgs);
+    }
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'tl-actions';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm';
+    editBtn.textContent = t('edit');
+    editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditEvent(ev); });
+    actions.appendChild(editBtn);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.textContent = t('delete');
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm(t('confirmDelete'))) {
+        await api(`/api/events/${ev.id}`, { method: 'DELETE' });
+        await refresh();
+      }
+    });
+    actions.appendChild(delBtn);
+    card.appendChild(actions);
+
+    item.appendChild(card);
+    list.appendChild(item);
+
+    // Time delta
+    if (i < items.length - 1) {
+      const delta = calcDelta(ev.timestamp, items[i + 1].timestamp);
+      if (delta) {
+        const d = document.createElement('div');
+        d.className = 'tl-delta';
+        d.textContent = `+${delta}`;
+        list.appendChild(d);
+      }
+    }
+  });
+
+  el.appendChild(list);
+}
+
+// --- Chart View ---
+let chartItems = []; // cached for re-render on zoom/pan
+
+function renderChart(items) {
+  chartItems = items;
+  const el = document.getElementById('chartView');
+  el.innerHTML = '';
+  if (items.length === 0) {
+    chartZoom = 1; chartPanX = 0;
+    const d = document.createElement('div');
+    d.className = 'empty-state';
+    const h = document.createElement('h2');
+    h.textContent = t('noChartEvents');
+    d.appendChild(h);
+    el.appendChild(d);
+    return;
+  }
+
+  // Group by tag
+  const lanesMap = new Map();
+  items.forEach(ev => {
+    const tags = ev.tags.length > 0 ? ev.tags : [t('untagged')];
+    tags.forEach(t => {
+      if (!lanesMap.has(t)) lanesMap.set(t, []);
+      lanesMap.get(t).push(ev);
+    });
+  });
+  const lanes = Array.from(lanesMap.entries());
+
+  // Base time range (full extent)
+  const times = items.flatMap(e => {
+    const ts = [new Date(e.timestamp).getTime()];
+    if (e.timestamp_end) ts.push(new Date(e.timestamp_end).getTime());
+    return ts;
+  }).filter(t => !isNaN(t));
+  if (times.length === 0) return;
+  const rawMin = Math.min(...times);
+  const rawMax = Math.max(...times);
+  const padding = (rawMax - rawMin || 3600000) * 0.05; // 5% padding on each side
+  chartBaseMinT = rawMin - padding;
+  chartBaseMaxT = rawMax + padding;
+  const baseRange = chartBaseMaxT - chartBaseMinT;
+
+  // Visible range after zoom/pan
+  const visRange = baseRange / chartZoom;
+  // Clamp pan so we don't scroll past data
+  const maxPan = baseRange - visRange;
+  if (chartPanX < 0) chartPanX = 0;
+  if (chartPanX > maxPan) chartPanX = maxPan;
+  const visMin = chartBaseMinT + chartPanX;
+  const visMax = visMin + visRange;
+
+  // Dimensions
+  const labelW = 140;
+  const padR = 40;
+  const laneH = 50;
+  const headerH = 40;
+  const chartW = Math.max(1000, document.documentElement.clientWidth - 48);
+  const plotW = chartW - labelW - padR;
+  const svgH = headerH + lanes.length * laneH + 20;
+
+  // Zoom controls
+  const controls = document.createElement('div');
+  controls.className = 'chart-controls';
+  const zoomLabel = document.createElement('span');
+  zoomLabel.className = 'chart-zoom-label';
+  zoomLabel.textContent = chartZoom <= 1 ? t('chartFit') : `${chartZoom.toFixed(1)}x`;
+  const zoomInBtn = document.createElement('button');
+  zoomInBtn.className = 'btn btn-sm';
+  zoomInBtn.textContent = '+';
+  zoomInBtn.addEventListener('click', () => chartZoomAt(1.5, 0.5));
+  const zoomOutBtn = document.createElement('button');
+  zoomOutBtn.className = 'btn btn-sm';
+  zoomOutBtn.textContent = '−';
+  zoomOutBtn.addEventListener('click', () => chartZoomAt(1/1.5, 0.5));
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn btn-sm';
+  resetBtn.textContent = t('chartReset');
+  resetBtn.addEventListener('click', () => { chartZoom = 1; chartPanX = 0; renderChart(chartItems); });
+  controls.appendChild(zoomOutBtn);
+  controls.appendChild(zoomLabel);
+  controls.appendChild(zoomInBtn);
+  controls.appendChild(resetBtn);
+  el.appendChild(controls);
+
+  // Helper: time to x coordinate
+  const timeToX = (t) => labelW + ((t - visMin) / visRange) * plotW;
+
+  const container = document.createElement('div');
+  container.className = 'chart-container';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'chart-svg');
+  svg.setAttribute('width', chartW);
+  svg.setAttribute('height', svgH);
+  svg.setAttribute('viewBox', `0 0 ${chartW} ${svgH}`);
+
+  // Clip path for plot area (prevents markers from overflowing into labels)
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+  clipPath.setAttribute('id', 'plot-clip');
+  const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  clipRect.setAttribute('x', labelW);
+  clipRect.setAttribute('y', 0);
+  clipRect.setAttribute('width', plotW);
+  clipRect.setAttribute('height', svgH);
+  clipPath.appendChild(clipRect);
+  defs.appendChild(clipPath);
+  svg.appendChild(defs);
+
+  // Time axis ticks
+  const ticks = calcAxisTicks(visMin, visMax, plotW);
+  ticks.forEach(tick => {
+    const x = timeToX(tick.time);
+    if (x < labelW || x > labelW + plotW) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x);
+    line.setAttribute('x2', x);
+    line.setAttribute('y1', headerH);
+    line.setAttribute('y2', svgH - 20);
+    line.setAttribute('class', 'chart-grid-line');
+    line.setAttribute('stroke-dasharray', '4,4');
+    svg.appendChild(line);
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', x);
+    label.setAttribute('y', headerH - 8);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('class', 'chart-axis-label');
+    label.textContent = tick.label;
+    svg.appendChild(label);
+  });
+
+  // Clipped group for markers
+  const plotGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  plotGroup.setAttribute('clip-path', 'url(#plot-clip)');
+
+  // Lanes
+  lanes.forEach(([tag, evts], li) => {
+    const y = headerH + li * laneH;
+
+    if (li % 2 === 0) {
+      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bg.setAttribute('x', labelW);
+      bg.setAttribute('y', y);
+      bg.setAttribute('width', plotW);
+      bg.setAttribute('height', laneH);
+      bg.setAttribute('fill', tagColor(tag));
+      bg.setAttribute('class', 'chart-lane-bg');
+      svg.appendChild(bg);
+    }
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', labelW - 10);
+    label.setAttribute('y', y + laneH / 2 + 4);
+    label.setAttribute('text-anchor', 'end');
+    label.setAttribute('class', 'chart-lane-label');
+    label.textContent = tag;
+    svg.appendChild(label);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', labelW);
+    line.setAttribute('x2', labelW + plotW);
+    line.setAttribute('y1', y + laneH / 2);
+    line.setAttribute('y2', y + laneH / 2);
+    line.setAttribute('stroke', tagColor(tag));
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('opacity', '0.3');
+    svg.appendChild(line);
+
+    // Markers
+    evts.forEach(ev => {
+      const t1 = new Date(ev.timestamp).getTime();
+      if (isNaN(t1)) return;
+      const x1 = timeToX(t1);
+      const cy = y + laneH / 2;
+
+      const t2 = ev.timestamp_end ? new Date(ev.timestamp_end).getTime() : NaN;
+      if (!isNaN(t2) && t2 > t1) {
+        const x2 = timeToX(t2);
+        const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bar.setAttribute('x', x1);
+        bar.setAttribute('y', cy - 6);
+        bar.setAttribute('width', Math.max(x2 - x1, 4));
+        bar.setAttribute('height', 12);
+        bar.setAttribute('rx', 4);
+        bar.setAttribute('fill', tagColor(tag));
+        bar.setAttribute('opacity', '0.7');
+        bar.setAttribute('class', 'chart-bar');
+        bar.style.cursor = 'pointer';
+        bar.addEventListener('mouseenter', (e) => showChartTooltip(e, ev));
+        bar.addEventListener('mouseleave', hideChartTooltip);
+        bar.addEventListener('click', () => openEditEvent(ev));
+        plotGroup.appendChild(bar);
+        [x1, x2].forEach(cx => {
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', cx);
+          dot.setAttribute('cy', cy);
+          dot.setAttribute('r', '4');
+          dot.setAttribute('fill', tagColor(tag));
+          plotGroup.appendChild(dot);
+        });
+      } else {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x1);
+        circle.setAttribute('cy', cy);
+        circle.setAttribute('r', '6');
+        circle.setAttribute('fill', tagColor(tag));
+        circle.setAttribute('class', 'chart-marker');
+        circle.addEventListener('mouseenter', (e) => showChartTooltip(e, ev));
+        circle.addEventListener('mouseleave', hideChartTooltip);
+        circle.addEventListener('click', () => openEditEvent(ev));
+        plotGroup.appendChild(circle);
+      }
+    });
+  });
+
+  svg.appendChild(plotGroup);
+  container.appendChild(svg);
+
+  // Cursor time indicator
+  const cursorLine = document.createElement('div');
+  cursorLine.className = 'chart-cursor-line';
+  cursorLine.style.height = svgH + 'px';
+  container.appendChild(cursorLine);
+
+  const cursorLabel = document.createElement('div');
+  cursorLabel.className = 'chart-cursor-label';
+  container.appendChild(cursorLabel);
+
+  el.appendChild(container);
+
+  // Store chart geometry for global event handlers
+  chartState.container = container;
+  chartState.cursorLine = cursorLine;
+  chartState.cursorLabel = cursorLabel;
+  chartState.labelW = labelW;
+  chartState.plotW = plotW;
+  chartState.visMin = visMin;
+  chartState.visRange = visRange;
+  chartState.svgH = svgH;
+
+  // Wheel zoom (must be on container for passive:false)
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left + container.scrollLeft;
+    const pctX = Math.max(0, Math.min(1, (mouseX - chartState.labelW) / chartState.plotW));
+    const factor = e.deltaY < 0 ? 1.25 : 0.8;
+    chartZoomAt(factor, pctX);
+  }, { passive: false });
+}
+
+// --- Chart interaction state (survives re-renders) ---
+const chartState = {
+  container: null, cursorLine: null, cursorLabel: null,
+  labelW: 0, plotW: 0, visMin: 0, visRange: 0, svgH: 0,
+  dragStart: null, dragPanStart: 0
+};
+
+// Global listeners (registered once)
+function initChartListeners() {
+  document.addEventListener('mousemove', (e) => {
+    const c = chartState.container;
+    if (!c || currentView !== 'chart') return;
+
+    const rect = c.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left + c.scrollLeft;
+    const plotX = mouseX - chartState.labelW;
+
+    // Cursor time bar
+    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      if (plotX >= 0 && plotX <= chartState.plotW) {
+        chartState.cursorLine.style.left = mouseX + 'px';
+        chartState.cursorLine.style.display = 'block';
+        chartState.cursorLabel.style.left = mouseX + 'px';
+        chartState.cursorLabel.style.display = 'block';
+        const cursorTime = chartState.visMin + (plotX / chartState.plotW) * chartState.visRange;
+        chartState.cursorLabel.textContent = formatTime(new Date(cursorTime).toISOString());
+      } else {
+        chartState.cursorLine.style.display = 'none';
+        chartState.cursorLabel.style.display = 'none';
+      }
+    } else {
+      chartState.cursorLine.style.display = 'none';
+      chartState.cursorLabel.style.display = 'none';
+    }
+
+    // Drag pan
+    if (chartState.dragStart !== null) {
+      const dx = e.clientX - chartState.dragStart;
+      const pxPerMs = chartState.plotW / chartState.visRange;
+      chartPanX = chartState.dragPanStart - dx / pxPerMs;
+      renderChart(chartItems);
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    const c = chartState.container;
+    if (!c || currentView !== 'chart') return;
+    if (!c.contains(e.target)) return;
+    if (e.target.closest('.chart-marker, .chart-bar, .btn')) return;
+    chartState.dragStart = e.clientX;
+    chartState.dragPanStart = chartPanX;
+    c.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (chartState.dragStart === null) return;
+    chartState.dragStart = null;
+    if (chartState.container) chartState.container.style.cursor = '';
+  });
+}
+
+// Zoom centered on a fraction (0=left, 1=right) of the plot area
+function chartZoomAt(factor, pctX) {
+  const baseRange = chartBaseMaxT - chartBaseMinT || 3600000;
+  const oldVisRange = baseRange / chartZoom;
+  const newZoom = Math.max(1, Math.min(50, chartZoom * factor));
+  const newVisRange = baseRange / newZoom;
+  // Adjust pan so zoom is centered on mouse position
+  const viewStart = chartBaseMinT + chartPanX;
+  const focusTime = viewStart + pctX * oldVisRange;
+  chartZoom = newZoom;
+  chartPanX = focusTime - chartBaseMinT - pctX * newVisRange;
+  renderChart(chartItems);
+}
+
+function calcAxisTicks(minT, maxT, plotW) {
+  const rangeMs = maxT - minT || 3600000;
+  const targetTicks = Math.floor(plotW / 120);
+  const intervals = [60000,300000,600000,900000,1800000,3600000,7200000,21600000,43200000,86400000];
+  let interval = intervals[0];
+  for (const iv of intervals) {
+    if (rangeMs / iv <= targetTicks * 1.5) { interval = iv; break; }
+  }
+  const ticks = [];
+  const start = Math.ceil(minT / interval) * interval;
+  for (let t = start; t <= maxT; t += interval) {
+    const d = new Date(t);
+    let label;
+    if (interval >= 86400000) {
+      label = `${d.getMonth()+1}/${d.getDate()}`;
+    } else {
+      label = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+    ticks.push({ time: t, label });
+  }
+  return ticks;
+}
+
+function showChartTooltip(e, ev) {
+  const tip = document.getElementById('chartTooltip');
+  tip.innerHTML = '';
+  const tt = document.createElement('div');
+  tt.style.fontWeight = '700';
+  let tipTime = formatTime(ev.timestamp);
+  if (ev.timestamp_end) tipTime += ' — ' + formatTime(ev.timestamp_end);
+  tt.textContent = tipTime;
+  tip.appendChild(tt);
+  if (ev.description) {
+    const d = document.createElement('div');
+    d.textContent = ev.description.substring(0, 100) + (ev.description.length > 100 ? '...' : '');
+    tip.appendChild(d);
+  }
+  if (ev.actor) {
+    const a = document.createElement('div');
+    a.style.color = 'var(--text-secondary)';
+    a.textContent = ev.actor;
+    tip.appendChild(a);
+  }
+  const rect = e.target.getBoundingClientRect();
+  tip.style.left = rect.left + 'px';
+  tip.style.top = (rect.bottom + 8) + 'px';
+  tip.classList.add('visible');
+}
+
+function hideChartTooltip() {
+  document.getElementById('chartTooltip').classList.remove('visible');
+}
+
+// --- Time helpers ---
+function formatTime(ts) {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return ts;
+  const opts = {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  };
+  // Always apply the incident timezone so all times are shown in the same zone
+  const tz = currentTimezone && currentTimezone !== 'Local' ? currentTimezone : undefined;
+  if (tz) opts.timeZone = tz;
+  try {
+    const parts = new Intl.DateTimeFormat('sv-SE', opts).formatToParts(d);
+    const get = type => (parts.find(p => p.type === type) || {}).value || '00';
+    return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`;
+  } catch(e) {
+    // Fallback: format in browser local time
+    const mo = String(d.getMonth()+1).padStart(2,'0');
+    const da = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    const ss = String(d.getSeconds()).padStart(2,'0');
+    return `${d.getFullYear()}-${mo}-${da} ${hh}:${mm}:${ss}`;
+  }
+}
+
+function calcDelta(from, to) {
+  const a = new Date(from), b = new Date(to);
+  if (isNaN(a) || isNaN(b)) return '';
+  const ms = b - a;
+  if (ms <= 0) return '';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  if (rm === 0) return `${h}h`;
+  return `${h}h${rm}m`;
+}
+
+// Convert ISO timestamp to datetime-local value in a given timezone
+function toDatetimeLocalInTz(ts, tz) {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  if (tz && tz !== 'Local') {
+    try {
+      const opts = {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false, timeZone: tz
+      };
+      const parts = new Intl.DateTimeFormat('sv-SE', opts).formatToParts(d);
+      const get = type => (parts.find(p => p.type === type) || {}).value || '00';
+      return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`;
+    } catch(e) {}
+  }
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60000);
+  return local.toISOString().slice(0, 19);
+}
+
+function toDatetimeLocal(ts) {
+  return toDatetimeLocalInTz(ts, currentTimezone);
+}
+
+// Get UTC offset string (+HH:MM) for a timezone at a given datetime-local value
+function tzOffsetStr(tz, datetimeLocalVal) {
+  try {
+    const tempDate = new Date(datetimeLocalVal || new Date().toISOString());
+    const opts = { timeZone: tz, timeZoneName: 'shortOffset' };
+    const formatted = new Intl.DateTimeFormat('en-US', opts).format(tempDate);
+    const match = formatted.match(/GMT([+-]?\d+(?::\d+)?)/);
+    if (match) {
+      let o = match[1];
+      if (o === '0' || o === '+0' || o === '-0') return '+00:00';
+      const sign = (o[0] === '-') ? '-' : '+';
+      o = o.replace(/^[+-]/, '');
+      if (!o.includes(':')) return sign + o.padStart(2, '0') + ':00';
+      const p = o.split(':');
+      return sign + p[0].padStart(2, '0') + ':' + p[1].padStart(2, '0');
+    }
+  } catch(e) {}
+  return '';
+}
+
+// Convert datetime-local value + timezone to ISO string
+function fromDatetimeLocalInTz(val, tz) {
+  if (!val) return '';
+  if (tz) {
+    const offset = tzOffsetStr(tz, val);
+    if (offset) {
+      return new Date(val + offset).toISOString();
+    }
+  }
+  return new Date(val).toISOString();
+}
+
+function fromDatetimeLocal(val) {
+  return fromDatetimeLocalInTz(val, currentTimezone);
+}
+
+// --- Input TZ select ---
+const COMMON_TIMEZONES = [
+  'UTC',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Kolkata',
+  'Asia/Singapore',
+  'Asia/Seoul',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Pacific/Auckland',
+  'Australia/Sydney',
+];
+
+function populateInputTzSelect() {
+  const sel = document.getElementById('eventInputTz');
+  sel.innerHTML = '';
+  // Build list: incident TZ first, then common ones (deduplicated)
+  const tzList = [];
+  if (currentTimezone) tzList.push(currentTimezone);
+  COMMON_TIMEZONES.forEach(z => { if (!tzList.includes(z)) tzList.push(z); });
+
+  tzList.forEach(z => {
+    const opt = document.createElement('option');
+    opt.value = z;
+    const offset = tzOffsetStr(z);
+    opt.textContent = `${z} (${offset || '?'})`;
+    sel.appendChild(opt);
+  });
+  sel.value = currentTimezone || 'UTC';
+}
+
+function getInputTz() {
+  return document.getElementById('eventInputTz').value || currentTimezone || 'UTC';
+}
+
+function updateEndTzHint() {
+  const hint = document.getElementById('eventEndTzHint');
+  const tz = getInputTz();
+  const offset = tzOffsetStr(tz);
+  hint.textContent = `${tz} (${offset})`;
+}
+
+// --- Modal: Event ---
+function openAddEvent() {
+  document.getElementById('modalTitle').textContent = t('addEventTitle');
+  document.getElementById('eventId').value = '';
+  populateInputTzSelect();
+  document.getElementById('eventTimestamp').value = toDatetimeLocal(new Date().toISOString());
+  document.getElementById('eventTimestampEnd').value = '';
+  updateEndTzHint();
+  document.getElementById('eventDescription').value = '';
+  document.getElementById('eventActor').value = '';
+  document.getElementById('eventTags').value = '';
+  document.getElementById('existingImages').innerHTML = '';
+  document.getElementById('uploadPreview').innerHTML = '';
+  document.getElementById('deleteEventBtn').style.display = 'none';
+  pendingFiles = [];
+  document.getElementById('eventModal').classList.remove('hidden');
+  document.getElementById('eventTimestamp').focus();
+}
+
+function openEditEvent(ev) {
+  document.getElementById('modalTitle').textContent = t('editEventTitle');
+  document.getElementById('eventId').value = ev.id;
+  populateInputTzSelect();
+  // Show existing event times in the incident TZ (default select value)
+  document.getElementById('eventTimestamp').value = toDatetimeLocal(ev.timestamp);
+  document.getElementById('eventTimestampEnd').value = ev.timestamp_end ? toDatetimeLocal(ev.timestamp_end) : '';
+  updateEndTzHint();
+  document.getElementById('eventDescription').value = ev.description;
+  document.getElementById('eventActor').value = ev.actor;
+  document.getElementById('eventTags').value = ev.tags.join(', ');
+  document.getElementById('deleteEventBtn').style.display = '';
+  pendingFiles = [];
+  document.getElementById('uploadPreview').innerHTML = '';
+
+  // Show existing images
+  const container = document.getElementById('existingImages');
+  container.innerHTML = '';
+  if (ev.images) {
+    ev.images.forEach(img => {
+      const item = document.createElement('div');
+      item.className = 'existing-image-item';
+      const imgEl = document.createElement('img');
+      imgEl.src = `/api/images/${img.id}`;
+      imgEl.alt = img.filename;
+      item.appendChild(imgEl);
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-btn';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.addEventListener('click', async () => {
+        if (confirm(t('confirmDeleteImage', {name: img.filename}))) {
+          await api(`/api/images/${img.id}`, { method: 'DELETE' });
+          item.remove();
+        }
+      });
+      item.appendChild(removeBtn);
+      container.appendChild(item);
+    });
+  }
+
+  document.getElementById('eventModal').classList.remove('hidden');
+}
+
+function closeEventModal() {
+  document.getElementById('eventModal').classList.add('hidden');
+  pendingFiles = [];
+}
+
+async function saveEvent() {
+  const id = document.getElementById('eventId').value;
+  const inputTz = getInputTz();
+  const timestamp = fromDatetimeLocalInTz(document.getElementById('eventTimestamp').value, inputTz);
+  const endVal = document.getElementById('eventTimestampEnd').value;
+  const timestamp_end = endVal ? fromDatetimeLocalInTz(endVal, inputTz) : null;
+  const description = document.getElementById('eventDescription').value.trim();
+  const actor = document.getElementById('eventActor').value.trim();
+  const tags = document.getElementById('eventTags').value
+    .split(',').map(t => t.trim()).filter(t => t);
+
+  const input_tz = inputTz;
+  const body = JSON.stringify({ timestamp, timestamp_end, input_tz, description, actor, tags });
+  let savedEvent;
+
+  if (id) {
+    savedEvent = await (await api(`/api/events/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    })).json();
+  } else {
+    savedEvent = await (await api('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    })).json();
+  }
+
+  // Upload pending images
+  for (const file of pendingFiles) {
+    const fd = new FormData();
+    fd.append('file', file);
+    await api(`/api/events/${savedEvent.id}/images`, { method: 'POST', body: fd });
+  }
+
+  closeEventModal();
+  await refresh();
+}
+
+async function deleteCurrentEvent() {
+  const id = document.getElementById('eventId').value;
+  if (!id) return;
+  if (!confirm(t('confirmDeleteAll'))) return;
+  await api(`/api/events/${id}`, { method: 'DELETE' });
+  closeEventModal();
+  await refresh();
+}
+
+// --- Modal: Meta ---
+function openMetaEdit() {
+  document.getElementById('metaCaseId').value = meta.case_id || '';
+  document.getElementById('metaTitle').value = meta.title || '';
+  document.getElementById('metaTimezone').value = currentTimezone || '';
+  document.getElementById('metaModal').classList.remove('hidden');
+  document.getElementById('metaCaseId').focus();
+}
+
+function closeMetaModal() {
+  document.getElementById('metaModal').classList.add('hidden');
+}
+
+async function saveMeta() {
+  const tzVal = document.getElementById('metaTimezone').value.trim();
+  await api('/api/meta', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      case_id: document.getElementById('metaCaseId').value.trim(),
+      title: document.getElementById('metaTitle').value.trim(),
+      timezone: tzVal
+    })
+  });
+  closeMetaModal();
+  await loadMeta();
+  render();
+}
+
+// --- Lightbox ---
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.remove('hidden');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+}
+
+// --- Image upload handling ---
+function setupImageUpload() {
+  const area = document.getElementById('imageUploadArea');
+  const input = document.getElementById('imageInput');
+
+  area.addEventListener('click', () => input.click());
+  area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
+  area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+  area.addEventListener('drop', (e) => {
+    e.preventDefault();
+    area.classList.remove('dragover');
+    addFiles(e.dataTransfer.files);
+  });
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+}
+
+function addFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    pendingFiles.push(f);
+  }
+  renderUploadPreview();
+}
+
+function renderUploadPreview() {
+  const container = document.getElementById('uploadPreview');
+  container.innerHTML = '';
+  pendingFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'upload-preview-item';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    item.appendChild(img);
+    const btn = document.createElement('button');
+    btn.className = 'remove-btn';
+    btn.textContent = '\u00d7';
+    btn.addEventListener('click', () => { pendingFiles.splice(i, 1); renderUploadPreview(); });
+    item.appendChild(btn);
+    container.appendChild(item);
+  });
+}
+
+// --- Tag filter / datalist ---
+function updateTagFilter() {
+  const dropdown = document.getElementById('tagFilterDropdown');
+  dropdown.innerHTML = '';
+
+  // Remove tags no longer in allTags
+  selectedTags.forEach(t => { if (!allTags.includes(t)) selectedTags.delete(t); });
+
+  allTags.forEach(tag => {
+    const item = document.createElement('label');
+    item.className = 'tag-filter-item';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = selectedTags.has(tag);
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedTags.add(tag);
+      else selectedTags.delete(tag);
+      updateTagFilterBtn();
+      render();
+    });
+    item.appendChild(cb);
+
+    const dot = document.createElement('span');
+    dot.className = 'tag-filter-color';
+    dot.style.background = tagColor(tag);
+    item.appendChild(dot);
+
+    const label = document.createElement('span');
+    label.textContent = tag;
+    item.appendChild(label);
+
+    dropdown.appendChild(item);
+  });
+
+  updateTagFilterBtn();
+}
+
+function updateTagFilterBtn() {
+  const btn = document.getElementById('tagFilterBtn');
+  if (selectedTags.size === 0) {
+    btn.textContent = t('allTags');
+  } else if (selectedTags.size <= 2) {
+    btn.textContent = Array.from(selectedTags).join(', ');
+  } else {
+    btn.textContent = Array.from(selectedTags).slice(0, 2).join(', ') + ` +${selectedTags.size - 2}`;
+  }
+}
+
+function setupTagFilterToggle() {
+  const btn = document.getElementById('tagFilterBtn');
+  const dropdown = document.getElementById('tagFilterDropdown');
+  const wrap = document.getElementById('tagFilterWrap');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+}
+
+function updateTagDatalist() {
+  const dl = document.getElementById('tagList');
+  dl.innerHTML = '';
+  allTags.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    dl.appendChild(opt);
+  });
+  // Actor datalist
+  const actors = [...new Set(events.map(e => e.actor).filter(a => a))];
+  const adl = document.getElementById('actorList');
+  adl.innerHTML = '';
+  actors.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    adl.appendChild(opt);
+  });
+}
+
+// --- Theme ---
+function initTheme() {
+  const saved = localStorage.getItem('ir-tl-theme');
+  if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('ir-tl-theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('ir-tl-theme', 'dark');
+  }
+}
+
+// --- View toggle ---
+function setView(view) {
+  currentView = view;
+  localStorage.setItem('ir-tl-view', view);
+  document.getElementById('viewList').classList.toggle('active', view === 'list');
+  document.getElementById('viewChart').classList.toggle('active', view === 'chart');
+  render();
+}
+
+// --- Export ---
+function exportMarkdown() {
+  window.location.href = '/api/export/markdown';
+}
+
+// --- Init ---
+function init() {
+  initTheme();
+  applyLang();
+  setupImageUpload();
+  initChartListeners();
+
+  // Event listeners
+  document.getElementById('langToggle').addEventListener('click', toggleLang);
+  document.getElementById('addEventBtn').addEventListener('click', openAddEvent);
+  document.getElementById('cancelEventBtn').addEventListener('click', closeEventModal);
+  document.getElementById('deleteEventBtn').addEventListener('click', deleteCurrentEvent);
+  document.getElementById('eventForm').addEventListener('submit', (e) => { e.preventDefault(); saveEvent(); });
+  // When input TZ changes, re-convert the displayed times
+  document.getElementById('eventInputTz').addEventListener('change', () => {
+    const sel = document.getElementById('eventInputTz');
+    const newTz = sel.value;
+    // Re-display: read current ISO (stored in a hidden attribute) and convert to new TZ
+    // For simplicity: the input values are "wall clock in selected TZ"
+    // We just update the hint; the user enters times in their chosen TZ
+    updateEndTzHint();
+  });
+  document.getElementById('caseId').addEventListener('click', openMetaEdit);
+  document.getElementById('incidentTitle').addEventListener('click', openMetaEdit);
+  document.getElementById('headerTz').addEventListener('click', openMetaEdit);
+  document.getElementById('cancelMetaBtn').addEventListener('click', closeMetaModal);
+  document.getElementById('saveMetaBtn').addEventListener('click', saveMeta);
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('viewList').addEventListener('click', () => setView('list'));
+  document.getElementById('viewChart').addEventListener('click', () => setView('chart'));
+  setupTagFilterToggle();
+  document.getElementById('exportBtn').addEventListener('click', exportMarkdown);
+  document.getElementById('lightbox').addEventListener('click', closeLightbox);
+
+  // Close modals on overlay click
+  document.getElementById('eventModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeEventModal();
+  });
+  document.getElementById('metaModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeMetaModal();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeEventModal();
+      closeMetaModal();
+      closeLightbox();
+    }
+  });
+
+  // Set initial view
+  setView(currentView);
+
+  refresh();
+}
+
+init();
+</script>
+</body>
+</html>
