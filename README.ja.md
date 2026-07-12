@@ -103,7 +103,7 @@ ir-timeline (Go バイナリ)
 ```bash
 make build          # → dist/ir-timeline
 make test           # → go test ./...
-make build-all      # → 5 プラットフォーム対応バイナリ
+make build-all      # → 4 プラットフォーム対応バイナリ（darwin は arm64 のみ・Intel 非対応）
 make clean          # → dist/ を削除
 ```
 

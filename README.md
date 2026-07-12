@@ -103,7 +103,7 @@ See [docs/design.md](docs/design.md) for full design document.
 ```bash
 make build          # → dist/ir-timeline
 make test           # → go test ./...
-make build-all      # → 5 platform binaries
+make build-all      # → 4 platform binaries (darwin arm64 only, no Intel)
 make clean          # → remove dist/
 ```
 

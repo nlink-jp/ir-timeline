@@ -14,7 +14,7 @@ github.com/nlink-jp/ir-timeline
 
 ```bash
 make build       # → dist/ir-timeline
-make build-all   # → dist/ir-timeline-{os}-{arch} (5 platforms)
+make build-all   # → dist/ir-timeline-{os}-{arch} (4 platforms; darwin arm64 only, no Intel)
 make test        # → go test ./... -v
 make check       # → test + build
 make clean       # → rm -rf dist/
