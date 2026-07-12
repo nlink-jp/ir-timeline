@@ -55,3 +55,10 @@ check: test build
 
 clean:
 	rm -rf $(DIST_DIR)
+
+# Homebrew tap generation (see scripts/release-brew.mk). After `make package`,
+# `make brew` generates this formula from the built darwin-arm64 zip into the
+# local nlink-jp/homebrew-tap checkout. The package target is unchanged.
+BREW_KIND := formula
+BREW_DESC := Incident-response timeline recorder with browser UI and SQLite
+include scripts/release-brew.mk
