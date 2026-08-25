@@ -18,6 +18,7 @@ make build-all   # → dist/ir-timeline-{os}-{arch} (4 platforms; darwin arm64 o
 make test        # → go test ./... -v
 make check       # → test + build
 make clean       # → rm -rf dist/
+make verify-release  # gate: .notarized marker + freshness (run before upload)
 ```
 
 ## Key Files
