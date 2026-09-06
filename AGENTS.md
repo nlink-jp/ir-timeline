@@ -16,6 +16,7 @@ github.com/nlink-jp/ir-timeline
 make build       # → dist/ir-timeline
 make build-all   # → dist/ir-timeline-{os}-{arch} (4 platforms; darwin arm64 only, no Intel)
 make test        # → go test ./... -v
+make test-linux  # same suite on Linux (container)
 make check       # → test + build
 make clean       # → rm -rf dist/
 make verify-release  # gate: .notarized marker + freshness (run before upload)
