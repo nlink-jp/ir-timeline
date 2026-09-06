@@ -431,7 +431,7 @@ make clean       # → rm -rf dist/
 
 **VERSION:** `git describe --tags --always --dirty` で自動取得。`-X main.version` で埋め込み。
 
-**Supported platforms:** linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64
+**Supported platforms:** linux/amd64, linux/arm64, darwin/arm64, windows/amd64 (darwin is arm64-only)
 
 **Release process:**
 1. `CHANGELOG.md` 更新 → `chore: release vX.Y.Z` コミット
