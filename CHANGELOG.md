@@ -61,3 +61,15 @@ identical to v0.1.0.
 - Incident metadata (title, case ID)
 - Markdown export
 - Auto-open browser on launch
+## [Unreleased]
+
+### Fixed
+
+- **`make verify-release` now fails closed.** Its last block chained unzip, the
+  packaged binary's `--version` and `spctl` with `&&` and ended the whole chain
+  in `|| true`, so a zip that did not unpack or a binary that did not run exited
+  0 and the upload proceeded. Each step is now judged on its own, the packaged
+  binary's `--version` must contain the tag being released, and only the
+  informational `spctl` line may be ignored. Matches the org template
+  (CONVENTIONS.md §Code Signing → Verifying a release).
+
