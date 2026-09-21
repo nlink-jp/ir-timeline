@@ -96,7 +96,7 @@ ir-timeline (Go binary)
     └── index.html  — SPA (HTML + CSS + JS, embedded via embed.FS)
 ```
 
-See [docs/design.md](docs/design.md) for full design document.
+See [docs/en/design.md](docs/en/design.md) for full design document.
 
 ## Build
 

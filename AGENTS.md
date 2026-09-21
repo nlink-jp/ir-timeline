@@ -25,12 +25,13 @@ make verify-release  # gate: .notarized marker + freshness (run before upload)
 ## Key Files
 
 ```
-main.go          — entry point, CLI flags, HTTP server, graceful shutdown, import subcommand
-storage.go       — SQLite schema, migration, CRUD (meta, events, event_tags, event_images)
-handler.go       — HTTP handlers (REST API + static file serving)
-import.go        — JSON/CSV file import logic
-web/index.html   — SPA (HTML + CSS + JS, embedded via embed.FS)
-docs/design.md   — design document
+main.go               — entry point, CLI flags, HTTP server, graceful shutdown, import subcommand
+storage.go            — SQLite schema, migration, CRUD (meta, events, event_tags, event_images)
+handler.go            — HTTP handlers (REST API + static file serving)
+import.go             — JSON/CSV file import logic
+web/index.html        — SPA (HTML + CSS + JS, embedded via embed.FS)
+docs/en/design.md     — design document (English)
+docs/ja/design.ja.md  — design document (Japanese)
 ```
 
 ## Architecture

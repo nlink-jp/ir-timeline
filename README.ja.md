@@ -96,7 +96,7 @@ ir-timeline (Go バイナリ)
     └── index.html  — SPA (HTML + CSS + JS、embed.FS でバイナリに同梱)
 ```
 
-詳細設計は [docs/design.md](docs/design.md) を参照。
+詳細設計は [docs/ja/design.ja.md](docs/ja/design.ja.md) を参照。
 
 ## ビルド
 

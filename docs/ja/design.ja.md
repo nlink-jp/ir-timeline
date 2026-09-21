@@ -77,7 +77,10 @@ ir-timeline/
 ├── web/
 │   └── index.html     # SPA (HTML + embedded CSS + JS)
 ├── docs/
-│   └── design.md      # This document
+│   ├── en/
+│   │   └── design.md      # This document (English)
+│   └── ja/
+│       └── design.ja.md   # This document (Japanese)
 ├── Makefile           # build, build-all, test, check, clean
 ├── AGENTS.md          # Project summary for AI agents
 ├── go.mod
