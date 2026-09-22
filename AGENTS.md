@@ -19,7 +19,7 @@ make test        # → go test ./... -v
 make test-linux  # same suite on Linux (container)
 make check       # → test + build
 make clean       # → rm -rf dist/
-make verify-release  # gate: .notarized marker + freshness (run before upload)
+make verify-release  # gate: notarized, fresh, runs at this version, clean linux archives (run before upload)
 ```
 
 ## Key Files
