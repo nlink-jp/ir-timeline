@@ -1,5 +1,63 @@
 # Changelog
 
+## [Unreleased]
+
+## v0.2.1 (2026-11-14)
+
+### Security
+
+- **Rebuilt with Go 1.27.4, which `go.mod` now requires** (it was `go 1.26.1`).
+  No code of the tool changed. v0.2.0 was built with Go 1.26.4; `govulncheck
+  -mode binary` finds 14 standard-library advisories in its darwin-arm64
+  binary, in `crypto/tls`, `crypto/x509`, `encoding/asn1`, `net/http` and
+  `net/textproto`: GO-2026-5856, GO-2026-5972, GO-2026-6089, GO-2026-6090,
+  GO-2026-6603, GO-2026-6607, GO-2026-6608, GO-2026-6609, GO-2026-6611,
+  GO-2026-6612, GO-2026-6613, GO-2026-6617, GO-2026-6809, GO-2026-6859. All are
+  fixed by Go 1.27.4. Binary mode shows that an affected function is linked
+  into the binary, not that the tool calls it; each advisory is described at
+  `https://pkg.go.dev/vuln/<ID>`. One is known to apply: GO-2026-6859 is in
+  `http.MaxBytesReader`, which the server uses to limit an uploaded image. The
+  server listens on 127.0.0.1 only.
+- `golang.org/x/sys` is updated from v0.42.0 to v0.49.0 for GO-2026-5024, an
+  integer overflow in `golang.org/x/sys/windows` (fixed in v0.44.0). It can
+  concern only the Windows build.
+
+### Changed
+
+- `make package` runs `govulncheck ./...` first (`make vuln`) and stops on a
+  finding, so a release cannot be built past one.
+
+### Fixed
+
+- **`make verify-release` now fails closed.** Its last block chained unzip, the
+  packaged binary's `--version` and `spctl` with `&&` and ended the whole chain
+  in `|| true`, so a zip that did not unpack or a binary that did not run exited
+  0 and the upload proceeded. Each step is now judged on its own, the packaged
+  binary's `--version` must contain the tag being released, and only the
+  informational `spctl` line may be ignored. Matches the org template
+  (CONVENTIONS.md §Code Signing → Verifying a release).
+- **The Linux archives no longer carry macOS file metadata.** macOS `tar` wrote
+  each bundled file's extended attributes (`com.apple.provenance`, and a Dropbox
+  attribute where the tree is synced) into the `.tar.gz` twice: as AppleDouble
+  `._` members, which GNU tar extracts as stray `._<name>` files beside the real
+  ones, and as `LIBARCHIVE.xattr.*` / `SCHILY.xattr.*` pax headers, which it
+  reports as unknown keywords. `make package` now archives with
+  `COPYFILE_DISABLE=1 tar --no-xattrs`; each setting stops one of the two.
+  Archives already published still carry them; the files themselves are
+  unaffected.
+
+### Internal
+
+- `make verify-release` also judges each Linux archive: no AppleDouble or other
+  macOS metadata members — listed with `--options 'tar:!mac-ext'`, because a
+  plain macOS listing folds `._` members away — no extended attributes as pax
+  headers, and exactly the canonical binary, `README.md` and `LICENSE`, compared
+  in the C locale.
+- The Linux-archive check in `make verify-release` reads each archive's pax
+  headers with Python's `tarfile` instead of grepping the decompressed stream,
+  which also matched file text that names the keywords (a bundled CHANGELOG,
+  for one).
+
 ## v0.2.0 (2026-07-12)
 
 ### Removed
@@ -61,36 +119,3 @@ identical to v0.1.0.
 - Incident metadata (title, case ID)
 - Markdown export
 - Auto-open browser on launch
-## [Unreleased]
-
-### Fixed
-
-- **`make verify-release` now fails closed.** Its last block chained unzip, the
-  packaged binary's `--version` and `spctl` with `&&` and ended the whole chain
-  in `|| true`, so a zip that did not unpack or a binary that did not run exited
-  0 and the upload proceeded. Each step is now judged on its own, the packaged
-  binary's `--version` must contain the tag being released, and only the
-  informational `spctl` line may be ignored. Matches the org template
-  (CONVENTIONS.md §Code Signing → Verifying a release).
-- **The Linux archives no longer carry macOS file metadata.** macOS `tar` wrote
-  each bundled file's extended attributes (`com.apple.provenance`, and a Dropbox
-  attribute where the tree is synced) into the `.tar.gz` twice: as AppleDouble
-  `._` members, which GNU tar extracts as stray `._<name>` files beside the real
-  ones, and as `LIBARCHIVE.xattr.*` / `SCHILY.xattr.*` pax headers, which it
-  reports as unknown keywords. `make package` now archives with
-  `COPYFILE_DISABLE=1 tar --no-xattrs`; each setting stops one of the two.
-  Archives already published still carry them; the files themselves are
-  unaffected.
-
-### Internal
-
-- `make verify-release` also judges each Linux archive: no AppleDouble or other
-  macOS metadata members — listed with `--options 'tar:!mac-ext'`, because a
-  plain macOS listing folds `._` members away — no extended attributes as pax
-  headers, and exactly the canonical binary, `README.md` and `LICENSE`, compared
-  in the C locale.
-- The Linux-archive check in `make verify-release` reads each archive's pax
-  headers with Python's `tarfile` instead of grepping the decompressed stream,
-  which also matched file text that names the keywords (a bundled CHANGELOG,
-  for one).
-
